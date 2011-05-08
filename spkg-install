@@ -29,6 +29,9 @@ if [ `uname` = "SunOS" -a "$SAGE64" = "yes" ]; then
 fi
 
 CPPFLAGS=-I$SAGE_LOCAL/include; export CPPFLAGS
+# On Fedora 14, the gpg-error is not linked, and thus it fails to build with
+# the following error: https://gist.github.com/961767
+export LDFLAGS="-lgpg-error"
 
 cd src
 
