@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+if [ "$SAGE_LOCAL" = "" ]; then
+   echo "SAGE_LOCAL undefined ... exiting";
+   echo "Maybe run 'sage -sh'?"
+   exit 1
+fi
+
+if [ $UNAME = "CYGWIN" ]; then
+   echo "Detected Cygwin -- checking for openssl development headers, since we use openssl instead."
+   if [ -d /usr/include/openssl ]; then
+       exit 0
+   else
+       echo "On Cygwin you *must* install Cygwin's openssl-devel development package (using Cygwin's setup.exe program)."
+       exit 1
+   fi
+fi 
+
+if [ `uname` = "Darwin" -a "$SAGE64" = "yes" ]; then
+   echo "64 bit MacIntel"
+   CFLAGS="-O2 -g -m64 "; export CFLAGS
+   CXXFLAGS="-O2 -g -m64 "; export CXXFLAGS
+fi
+
+if [ `uname` = "SunOS" -a "$SAGE64" = "yes" ]; then
+   echo "64 bit Solaris"
+   CFLAGS="-O2 -g -m64 "; export CFLAGS
+   CXXFLAGS="-O2 -g -m64 "; export CXXFLAGS
+fi
+
+CPPFLAGS=-I$SAGE_LOCAL/include; export CPPFLAGS
+
+cd src
+
+if [ `uname -s` = 'Darwin' ]; then
+    ./configure --disable-asm --prefix="$SAGE_LOCAL" --disable-padlock-support
+else
+    ./configure --prefix="$SAGE_LOCAL" --disable-padlock-support
+fi
+
+if [ $? -ne 0 ]; then
+   echo "failed to configure libgcrypt"
+   exit 1
+fi
+
+make
+
+if [ $? -ne 0 ]; then
+   echo "failed to build libgcrypt"
+   exit 1
+fi
+
+make install
+
+if [ $? -ne 0 ]; then
+   echo "failed to install libgcrypt"
+   exit 1
+fi
+
+if [ `uname` = 'FreeBSD' ]; then
+   ln -s libgcrypt.so.15.3 $SAGE_LOCAL/lib/libgcrypt.so
+fi
